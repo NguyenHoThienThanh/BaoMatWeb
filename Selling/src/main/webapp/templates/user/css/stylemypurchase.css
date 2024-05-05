@@ -1,0 +1,198 @@
+@media ( max-width : 767.98px) {
+	.border-sm-start-none {
+		border-left: none !important;
+	}
+}
+
+.nav-link {
+	position: relative;
+	font-weight: bold;
+	overflow: hidden;
+}
+
+.nav-link::after {
+	content: '';
+	display: block;
+	position: absolute;
+	width: 0;
+	height: 2px;
+	background-color: #007BFF;
+	/* Màu của vạch kẻ dưới */
+	transition: width 0.3s ease-in-out;
+	transform-origin: bottom right;
+}
+
+.nav-link:hover::after {
+	width: 100%;
+	transform-origin: bottom left;
+}
+
+/*CONTAINER*/
+.container {
+	margin: auto;
+	display: flex;
+	width: 1200px;
+}
+
+/* Phần "list-group" chiếm 20% chiều rộng của trang */
+.user__list {
+	width: 20%;
+}
+
+/* Phần "user-details" chiếm 80% còn lại */
+.user-details {
+    width: 100%;
+    padding: 30px;
+    margin-right: 27px;
+}
+
+.fas {
+	margin: 10px;
+}
+
+.user-details-title {
+	padding: 18px 0px;
+}
+
+.user-details-content {
+	display: flex;
+}
+
+.user-details-left {
+	width: 70%;
+	/*thụt lề */
+	padding-right: 50px;
+	padding-left: 50px;
+}
+
+.user-details-right {
+	width: 30%;
+	/*cho phần tử căn giữa */
+	justify-content: center;
+	display: flex;
+}
+
+.user-details-right-img {
+	text-align: center;
+	position: relative;
+	flex: 1;
+	height: 50%;
+	/* Đặt đường kẻ trái với kiểu inset và độ rộng 1px */
+	border-left-style: inset;
+	border-left-width: 1px;
+	border-left-color: #6c757d;
+}
+
+.user-details-title h1 {
+	border-bottom-style: inset;
+	border-bottom-width: 1px;
+	border-bottom-color: #6c757d;
+}
+
+.user-details-right img {
+	vertical-align: middle;
+	width: 120px;
+	align-items: center;
+	display: flex;
+	border-radius: 50%;
+	display: inline-block;
+}
+
+.user__id img {
+	vertical-align: middle;
+	width: 50px;
+	margin-right: 15px;
+}
+
+.user__id {
+	text-align: center;
+}
+
+.user__id p {
+	display: inline-block;
+}
+
+.btn btn-primary {
+	padding: 0, 50px;
+}
+
+.user-details-right-img button {
+	display: block;
+	align-self: center;
+	position: absolute;
+	top: 80%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+/*thử */
+#submenu {
+	display: none;
+	position: absolute;
+	left: -100%;
+	/* Sử dụng giá trị âm để ẩn ban đầu */
+}
+
+.show-submenu {
+	display: block;
+	position: static;
+}
+
+/**/
+.navbar-nav .nav-link {
+	font-size: 15px;
+	/* Kích thước chữ */
+	margin-right: 20px;
+
+	/* Khoảng cách giữa các mục */
+}
+
+.navbar-nav {
+	display: flex;
+	justify-content: space-between;
+	/* Căn đều các phần tử trong flex container */
+	width: 100%;
+	/* Đảm bảo chiều rộng 100% để căn đều */
+}
+
+.nav-item {
+	flex: 1;
+	/* Chia đều không gian giữa các phần tử con của flex container */
+	text-align: center;
+	/* Căn giữa nội dung trong mỗi phần tử */
+}
+
+.search {
+	margin-top: 10px;
+	/* Điều chỉnh khoảng cách từ đỉnh trang để giảm chiều cao */
+}
+
+.card-body {
+	padding: 5px;
+	/* Điều chỉnh padding bên trong card-body để giảm chiều cao */
+}
+
+.form-control-lg {
+	height: 30px;
+	/* Điều chỉnh chiều cao của ô tìm kiếm */
+}
+
+.parent {
+	position: relative;
+	/* Đảm bảo div cha có vị trí tương đối để div con sử dụng vị trí tuyệt đối */
+}
+
+.child {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	/* Đặt vị trí của div con ở góc trên cùng bên phải của div cha */
+}
+
+.mb-5 {
+	margin-bottom: 1rem !important;
+}
+
+.nav-item.active {
+	border-bottom: 2px solid #157347; /* Adjust the color as needed */
+}
