@@ -2,6 +2,8 @@ package orishop.controllers.web;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -127,16 +129,24 @@ public class WebHomeControllers extends HttpServlet {
 	}
 
 	private void saveRememberMe(HttpServletResponse resp, String username) {
-		String cookieValue = username;
-	    String cookieName = Constant.COOKIE_REMEBER;
-	    int maxAge = 30 * 60;
+	    try {
+	        // Sử dụng URLEncoder để mã hóa giá trị cookie
+	        String encodedUsername = URLEncoder.encode(username, "UTF-8");
+	        String cookieValue = encodedUsername;
+	        String cookieName = Constant.COOKIE_REMEBER;
+	        int maxAge = 30 * 60;
 
-	    // Xây dựng chuỗi tiêu đề Set-Cookie với SameSite=Lax
-	    String setCookieHeader = String.format("%s=%s; Max-Age=%d; Path=/; Secure; HttpOnly; SameSite=Lax", cookieName, cookieValue, maxAge);
+	        // Xây dựng chuỗi tiêu đề Set-Cookie với SameSite=Lax
+	        String setCookieHeader = String.format("%s=%s; Max-Age=%d; Path=/; Secure; HttpOnly; SameSite=Lax", cookieName, cookieValue, maxAge);
 
-	    // Thiết lập tiêu đề Set-Cookie cho response
-	    resp.setHeader("Set-Cookie", setCookieHeader);
+	        // Thiết lập tiêu đề Set-Cookie cho response
+	        resp.setHeader("Set-Cookie", setCookieHeader);
+	    } catch (UnsupportedEncodingException e) {
+	        // Xử lý ngoại lệ nếu có
+	        e.printStackTrace();
+	    }
 	}
+
 
 	private void postForgotPassword(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
@@ -208,6 +218,10 @@ public class WebHomeControllers extends HttpServlet {
 		resp.setCharacterEncoding("UTF-8");
 		req.setCharacterEncoding("UTF-8");
 		String username = req.getParameter("username");
+		if (username != null && !username.isEmpty()) {
+		    username = username.trim();
+		} else {
+		}
 		String password = req.getParameter("password");
 		boolean isRememberMe = false;
 		String remember = req.getParameter("remember");
