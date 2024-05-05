@@ -68,22 +68,38 @@ public class AccountServiceImpl implements IAccountService{
 
 
 	BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
+//	@Override
+//	public AccountModels login(String username, String password) {
+//	    // Tìm kiếm tài khoản trong cơ sở dữ liệu bằng username
+//	    AccountModels user = this.findOne(username);
+//	    if (user != null) {
+//	        // Lấy mật khẩu đã hash từ cơ sở dữ liệu
+//	        String storedPassword = user.getPassword().trim();
+//	        
+//	        // Mã hóa mật khẩu nhập vào trước khi so sánh
+//	        String encodedPassword = encoder.encode(password);
+//
+//	        // So sánh mật khẩu đã hash từ cơ sở dữ liệu với mật khẩu đã mã hóa từ người dùng nhập vào
+//	        if (encoder.matches(encodedPassword, storedPassword)) {
+//	            // Mật khẩu hợp lệ, trả về tài khoản
+//	            return user;
+//	        }
+//	    }
+//	    // Mật khẩu không hợp lệ hoặc tài khoản không tồn tại, trả về null
+//	    return null;
+//	}
+	
 	@Override
 	public AccountModels login(String username, String password) {
-	    // Tìm kiếm tài khoản trong cơ sở dữ liệu bằng username
-	    AccountModels user = this.findOne(username);
-	    if (user != null) {
-	        // Lấy mật khẩu đã hash từ cơ sở dữ liệu
-	        String storedPassword = user.getPassword();
-	        
-	        // So sánh mật khẩu nhập vào với mật khẩu đã hash
-	        if (encoder.matches(password, storedPassword)) {
-	            // Mật khẩu hợp lệ, trả về tài khoản
-	            return user;
-	        }
-	    }
-	    // Mật khẩu không hợp lệ hoặc tài khoản không tồn tại, trả về null
-	    return null;
+		AccountModels user = this.findOne(username);
+		String passwordDecryption = PasswordEncryption.decrypt(user.getPassword(), Constant.SECRETKEY, Constant.SALT);
+		if (user!=null && password.equals(user.getPassword())) {
+			return user;
+		} else if (user!=null && (password.equals(passwordDecryption))) {
+			return user;
+		} else
+		return null;
 	}
 
 	
