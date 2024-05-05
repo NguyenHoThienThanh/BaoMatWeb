@@ -66,17 +66,22 @@ public class AccountServiceImpl implements IAccountService{
 		return true;
 	}
 
+
+	
 	@Override
 	public AccountModels login(String username, String password) {
-		AccountModels user = this.findOne(username);
-		String passwordDecryption = PasswordEncryption.decrypt(user.getPassword(), Constant.SECRETKEY, Constant.SALT);
-		if (user!=null && password.equals(user.getPassword())) {
-			return user;
-		} else if (user!=null && (password.equals(passwordDecryption))) {
-			return user;
-		} else
-		return null;
+	    AccountModels user = this.findOne(username);
+	    if (user != null) {
+	        String storedPassword = user.getPassword();
+	        String passwordDecryption = PasswordEncryption.decrypt(storedPassword, Constant.SECRETKEY, Constant.SALT);
+	        // Kiểm tra mật khẩu
+	        if (password.equals(storedPassword) || password.equals(passwordDecryption)) {
+	            return user;
+	        }
+	    }
+	    return null;
 	}
+
 
 	@Override
 	public boolean checkExistUsername(String username) {
