@@ -92,19 +92,14 @@ public class AccountServiceImpl implements IAccountService{
 	
 	@Override
 	public AccountModels login(String username, String password) {
-	    AccountModels user = this.findOne(username);
-	    if (user != null) {
-	        // Lấy mật khẩu đã mã hóa từ cơ sở dữ liệu
-	        String storedPassword = user.getPassword();
-	        
-	        // So sánh mật khẩu nhập vào với mật khẩu đã mã hóa sử dụng BCrypt
-	        if (BCrypt.checkpw(password, storedPassword)) {
-	            // Mật khẩu hợp lệ, trả về người dùng
-	            return user;
-	        }
-	    }
-	    // Mật khẩu không hợp lệ hoặc người dùng không tồn tại, trả về null
-	    return null;
+		AccountModels user = this.findOne(username);
+		String passwordDecryption = PasswordEncryption.decrypt(user.getPassword(), Constant.SECRETKEY, Constant.SALT);
+		if (user!=null && user.getPassword().equals(password)){
+			return user;
+		} else if (user!=null && (passwordDecryption.equals(password))) {
+			return user;
+		} else
+		return null;
 	}
 
 	
