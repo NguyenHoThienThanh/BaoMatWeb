@@ -1,4 +1,5 @@
 package orishop.util;
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -50,31 +51,39 @@ public class PasswordEncryption {
 
   public static String decrypt(String strToDecrypt, String secretKey, String salt) {
 
-    try {
+	    try {
+	        byte[] encryptedData = Base64.getDecoder().decode(strToDecrypt);
+	        byte[] iv = new byte[16];
+	        System.arraycopy(encryptedData, 0, iv, 0, iv.length);
+	        IvParameterSpec ivspec = new IvParameterSpec(iv);
 
-        byte[] encryptedData = Base64.getDecoder().decode(strToDecrypt);
-        byte[] iv = new byte[16];
-        System.arraycopy(encryptedData, 0, iv, 0, iv.length);
-        IvParameterSpec ivspec = new IvParameterSpec(iv);
+	        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+	        KeySpec spec = new PBEKeySpec(secretKey.toCharArray(), salt.getBytes(), ITERATION_COUNT, KEY_LENGTH);
+	        SecretKey tmp = factory.generateSecret(spec);
+	        SecretKeySpec secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES");
 
-        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        KeySpec spec = new PBEKeySpec(secretKey.toCharArray(), salt.getBytes(), ITERATION_COUNT, KEY_LENGTH);
-        SecretKey tmp = factory.generateSecret(spec);
-        SecretKeySpec secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES");
+	        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+	        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivspec);
 
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivspec);
+	        byte[] cipherText = new byte[encryptedData.length - 16];
+	        System.arraycopy(encryptedData, 16, cipherText, 0, cipherText.length);
 
-        byte[] cipherText = new byte[encryptedData.length - 16];
-        System.arraycopy(encryptedData, 16, cipherText, 0, cipherText.length);
+	        // Bỏ qua lỗi padding
+	        cipher.doFinal(cipherText);  // Potentially throws BadPaddingException
 
-        byte[] decryptedText = cipher.doFinal(cipherText);
-        return new String(decryptedText, "UTF-8");
-    } catch (Exception e) {
-        e.printStackTrace();
-        return null;
-    }
-  }
+	        byte[] decryptedText = new String(cipherText, "UTF-8").getBytes(); // Assuming decryptedText is null-terminated
+
+	        return new String(decryptedText, "UTF-8");
+	    } catch (BadPaddingException e) {
+	        System.err.println("Warning: Padding error during decryption");
+	        // Handle padding error (e.g., log the error or return a specific error message)
+	        return null;
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return null;
+	    }
+	}
+
   public static void main(String[] args) {
 
 	    String secretKey = Constant.SECRETKEY;
