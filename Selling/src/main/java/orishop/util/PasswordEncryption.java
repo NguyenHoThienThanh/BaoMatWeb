@@ -62,7 +62,8 @@ public class PasswordEncryption {
 	        SecretKey tmp = factory.generateSecret(spec);
 	        SecretKeySpec secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES");
 
-	        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+	        Cipher cipher = Cipher.getInstance("AES/CBC/ZeroBytePadding");
+
 	        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivspec);
 
 	        byte[] cipherText = new byte[encryptedData.length - 16];
