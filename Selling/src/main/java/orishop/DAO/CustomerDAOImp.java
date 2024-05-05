@@ -102,12 +102,13 @@ public class CustomerDAOImp implements ICustomerDAO{
 	*/
 	@Override
 	public List<CustomerModels> findCustomerByCustomerName(String customerName) {
-	    String sql = "SELECT * FROM CUSTOMER WHERE customerName LIKE N'%" + customerName + "'";
+	    String sql = "SELECT * FROM CUSTOMER WHERE customerName LIKE  LIKE N'%' + ? + N'%'";
 	    List<CustomerModels> listcustomer = new ArrayList<CustomerModels>();
 	    try {
 	        new DBConnectionSQLServer();
 	        Connection conn = DBConnectionSQLServer.getConnectionW();
 	        PreparedStatement ps = conn.prepareStatement(sql);
+	        ps.setString(1, customerName);
 	        ResultSet rs = ps.executeQuery();
 	        while (rs.next()) {
 	        	CustomerModels customer = new CustomerModels();
