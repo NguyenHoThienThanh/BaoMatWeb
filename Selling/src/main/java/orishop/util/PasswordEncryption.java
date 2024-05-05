@@ -7,6 +7,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
 import java.util.Base64;
 
 public class PasswordEncryption {
@@ -16,32 +17,36 @@ public class PasswordEncryption {
 
   public static String encrypt(String strToEncrypt, String secretKey, String salt) {
 
-    try {
+	    try {
+	        SecureRandom secureRandom = new SecureRandom();
+	        byte[] iv = new byte[16];
+	        secureRandom.nextBytes(iv);
+	        IvParameterSpec ivspec = new IvParameterSpec(iv);
 
-        SecureRandom secureRandom = new SecureRandom();
-        byte[] iv = new byte[16];
-        secureRandom.nextBytes(iv);
-        IvParameterSpec ivspec = new IvParameterSpec(iv);
+	        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+	        KeySpec spec = new PBEKeySpec(secretKey.toCharArray(), salt.getBytes(), ITERATION_COUNT, KEY_LENGTH);
+	        SecretKey tmp = factory.generateSecret(spec);
+	        SecretKeySpec secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES");
 
-        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        KeySpec spec = new PBEKeySpec(secretKey.toCharArray(), salt.getBytes(), ITERATION_COUNT, KEY_LENGTH);
-        SecretKey tmp = factory.generateSecret(spec);
-        SecretKeySpec secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES");
+	        int paddingSize = 16 - (strToEncrypt.getBytes("UTF-8").length % 16);
+	        byte[] padding = new byte[paddingSize];
+	        Arrays.fill(padding, (byte) 0); // Pad with zero bytes
+	        strToEncrypt = strToEncrypt + new String(padding, "UTF-8");
 
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivspec);
+	        Cipher cipher = Cipher.getInstance("AES/CBC/ZeroBytePadding");
+	        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivspec);
 
-        byte[] cipherText = cipher.doFinal(strToEncrypt.getBytes("UTF-8"));
-        byte[] encryptedData = new byte[iv.length + cipherText.length];
-        System.arraycopy(iv, 0, encryptedData, 0, iv.length);
-        System.arraycopy(cipherText, 0, encryptedData, iv.length, cipherText.length);
+	        byte[] cipherText = cipher.doFinal(strToEncrypt.getBytes("UTF-8"));
+	        byte[] encryptedData = new byte[iv.length + cipherText.length];
+	        System.arraycopy(iv, 0, encryptedData, 0, iv.length);
+	        System.arraycopy(cipherText, 0, encryptedData, iv.length, cipherText.length);
 
-        return Base64.getEncoder().encodeToString(encryptedData);
-    } catch (Exception e) {
-        e.printStackTrace();
-        return null;
-    }
-  }
+	        return Base64.getEncoder().encodeToString(encryptedData);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return null;
+	    }
+	}
 
   public static String decrypt(String strToDecrypt, String secretKey, String salt) {
 
