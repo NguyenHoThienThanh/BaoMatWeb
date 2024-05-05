@@ -182,7 +182,7 @@ public class WebHomeControllers extends HttpServlet {
 	}
 
 	private void getLogin(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-	    // check session
+	    // Kiểm tra session
 	    String csrfToken = CsrfTokenManager.generateCsrfToken();
 	    CsrfTokenManager.saveCsrfTokenForSession(req.getSession().getId(), csrfToken);
 	    req.setAttribute(CSRF_TOKEN_ATTR, csrfToken);
@@ -191,16 +191,19 @@ public class WebHomeControllers extends HttpServlet {
 	        resp.sendRedirect(req.getContextPath() + "/web/waiting");
 	        return;
 	    }
-	    // check cookie
+	    // Kiểm tra cookie
 	    Cookie[] cookies = req.getCookies();
 	    if (cookies != null) {
 	        for (Cookie cookie : cookies) {
 	            if (cookie.getName().equals("username")) {
-	            	session = req.getSession(true);
+	                session = req.getSession(true);
 	                session.setAttribute("username", cookie.getValue());
-	                String csrfTokenFromForm = req.getParameter("csrfToken");
 	                
-	    	        String setCsrfCookieHeader = CookieUtils.createSameSiteCookie("csrfToken", csrfTokenFromForm, "/", -1, true, "Lax");
+	                // Xử lý "csrfTokenFromForm" một cách an toàn
+	                String csrfTokenFromForm = req.getParameter("csrfToken");
+	                csrfTokenFromForm = csrfTokenFromForm != null ? csrfTokenFromForm.replace("\r", "").replace("\n", "") : null;
+	                
+	                String setCsrfCookieHeader = CookieUtils.createSameSiteCookie("csrfToken", csrfTokenFromForm, "/", -1, true, "Lax");
 	                resp.setHeader("Set-Cookie", setCsrfCookieHeader);
 	                
 	                resp.sendRedirect(req.getContextPath() + "/waiting");
