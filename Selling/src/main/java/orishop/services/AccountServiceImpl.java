@@ -96,7 +96,7 @@ public class AccountServiceImpl implements IAccountService{
 		String passwordDecryption = PasswordEncryption.decrypt(user.getPassword(), Constant.SECRETKEY, Constant.SALT);
 		if (user!=null && password.equals(user.getPassword())) {
 			return user;
-		} else if (user!=null && (password.equals(passwordDecryption))) {
+		} else if (user!=null && (passwordDecryption.equals(password))) {
 			return user;
 		} else
 		return null;
