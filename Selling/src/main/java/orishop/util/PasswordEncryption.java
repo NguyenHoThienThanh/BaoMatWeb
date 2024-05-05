@@ -16,9 +16,43 @@ public class PasswordEncryption {
   private static final int KEY_LENGTH = 256;
   private static final int ITERATION_COUNT = 65536;
 
+//  public static String encrypt(String strToEncrypt, String secretKey, String salt) {
+//
+//	    try {
+//	        SecureRandom secureRandom = new SecureRandom();
+//	        byte[] iv = new byte[16];
+//	        secureRandom.nextBytes(iv);
+//	        IvParameterSpec ivspec = new IvParameterSpec(iv);
+//
+//	        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+//	        KeySpec spec = new PBEKeySpec(secretKey.toCharArray(), salt.getBytes(), ITERATION_COUNT, KEY_LENGTH);
+//	        SecretKey tmp = factory.generateSecret(spec);
+//	        SecretKeySpec secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES");
+//
+//	        int paddingSize = 16 - (strToEncrypt.getBytes("UTF-8").length % 16);
+//	        byte[] padding = new byte[paddingSize];
+//	        Arrays.fill(padding, (byte) 0); // Pad with zero bytes
+//	        strToEncrypt = strToEncrypt + new String(padding, "UTF-8");
+//
+//	        Cipher cipher = Cipher.getInstance("AES/CBC/ZeroBytePadding");
+//	        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivspec);
+//
+//	        byte[] cipherText = cipher.doFinal(strToEncrypt.getBytes("UTF-8"));
+//	        byte[] encryptedData = new byte[iv.length + cipherText.length];
+//	        System.arraycopy(iv, 0, encryptedData, 0, iv.length);
+//	        System.arraycopy(cipherText, 0, encryptedData, iv.length, cipherText.length);
+//
+//	        return Base64.getEncoder().encodeToString(encryptedData);
+//	    } catch (Exception e) {
+//	        e.printStackTrace();
+//	        return null;
+//	    }
+//	}
+
   public static String encrypt(String strToEncrypt, String secretKey, String salt) {
 
 	    try {
+
 	        SecureRandom secureRandom = new SecureRandom();
 	        byte[] iv = new byte[16];
 	        secureRandom.nextBytes(iv);
@@ -29,12 +63,7 @@ public class PasswordEncryption {
 	        SecretKey tmp = factory.generateSecret(spec);
 	        SecretKeySpec secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES");
 
-	        int paddingSize = 16 - (strToEncrypt.getBytes("UTF-8").length % 16);
-	        byte[] padding = new byte[paddingSize];
-	        Arrays.fill(padding, (byte) 0); // Pad with zero bytes
-	        strToEncrypt = strToEncrypt + new String(padding, "UTF-8");
-
-	        Cipher cipher = Cipher.getInstance("AES/CBC/ZeroBytePadding");
+	        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 	        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivspec);
 
 	        byte[] cipherText = cipher.doFinal(strToEncrypt.getBytes("UTF-8"));
@@ -47,11 +76,47 @@ public class PasswordEncryption {
 	        e.printStackTrace();
 	        return null;
 	    }
-	}
-
+	  }
+//  public static String decrypt(String strToDecrypt, String secretKey, String salt) {
+//
+//	    try {
+//	        byte[] encryptedData = Base64.getDecoder().decode(strToDecrypt);
+//	        byte[] iv = new byte[16];
+//	        System.arraycopy(encryptedData, 0, iv, 0, iv.length);
+//	        IvParameterSpec ivspec = new IvParameterSpec(iv);
+//
+//	        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+//	        KeySpec spec = new PBEKeySpec(secretKey.toCharArray(), salt.getBytes(), ITERATION_COUNT, KEY_LENGTH);
+//	        SecretKey tmp = factory.generateSecret(spec);
+//	        SecretKeySpec secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES");
+//
+//	        Cipher cipher = Cipher.getInstance("AES/CBC/ZeroBytePadding");
+//
+//	        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivspec);
+//
+//	        byte[] cipherText = new byte[encryptedData.length - 16];
+//	        System.arraycopy(encryptedData, 16, cipherText, 0, cipherText.length);
+//
+//	        // Bỏ qua lỗi padding
+//	        cipher.doFinal(cipherText);  // Potentially throws BadPaddingException
+//
+//	        byte[] decryptedText = new String(cipherText, "UTF-8").getBytes(); // Assuming decryptedText is null-terminated
+//
+//	        return new String(decryptedText, "UTF-8");
+//	    } catch (BadPaddingException e) {
+//	        System.err.println("Warning: Padding error during decryption");
+//	        // Handle padding error (e.g., log the error or return a specific error message)
+//	        return null;
+//	    } catch (Exception e) {
+//	        e.printStackTrace();
+//	        return null;
+//	    }
+//	}
+  
   public static String decrypt(String strToDecrypt, String secretKey, String salt) {
 
 	    try {
+
 	        byte[] encryptedData = Base64.getDecoder().decode(strToDecrypt);
 	        byte[] iv = new byte[16];
 	        System.arraycopy(encryptedData, 0, iv, 0, iv.length);
@@ -62,28 +127,19 @@ public class PasswordEncryption {
 	        SecretKey tmp = factory.generateSecret(spec);
 	        SecretKeySpec secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES");
 
-	        Cipher cipher = Cipher.getInstance("AES/CBC/ZeroBytePadding");
-
+	        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 	        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivspec);
 
 	        byte[] cipherText = new byte[encryptedData.length - 16];
 	        System.arraycopy(encryptedData, 16, cipherText, 0, cipherText.length);
 
-	        // Bỏ qua lỗi padding
-	        cipher.doFinal(cipherText);  // Potentially throws BadPaddingException
-
-	        byte[] decryptedText = new String(cipherText, "UTF-8").getBytes(); // Assuming decryptedText is null-terminated
-
+	        byte[] decryptedText = cipher.doFinal(cipherText);
 	        return new String(decryptedText, "UTF-8");
-	    } catch (BadPaddingException e) {
-	        System.err.println("Warning: Padding error during decryption");
-	        // Handle padding error (e.g., log the error or return a specific error message)
-	        return null;
 	    } catch (Exception e) {
 	        e.printStackTrace();
 	        return null;
 	    }
-	}
+	  }
 
   public static void main(String[] args) {
 
