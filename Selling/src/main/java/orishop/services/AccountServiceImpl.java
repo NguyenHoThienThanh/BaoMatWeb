@@ -1,7 +1,6 @@
 package orishop.services;
-
 import java.util.List;
-
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import orishop.DAO.IAccountDAO;
 import orishop.DAO.AccountDAOImpl;
@@ -23,6 +22,7 @@ public class AccountServiceImpl implements IAccountService{
 		return userDAO.findOne(id);
 	}
 
+	
 	@Override
 	public AccountModels findOne(String username) {
 		return userDAO.findOne(username);
@@ -67,21 +67,26 @@ public class AccountServiceImpl implements IAccountService{
 	}
 
 
-	
+	BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 	@Override
 	public AccountModels login(String username, String password) {
+	    // Tìm kiếm tài khoản trong cơ sở dữ liệu bằng username
 	    AccountModels user = this.findOne(username);
 	    if (user != null) {
+	        // Lấy mật khẩu đã hash từ cơ sở dữ liệu
 	        String storedPassword = user.getPassword();
-	        String passwordDecryption = PasswordEncryption.decrypt(storedPassword, Constant.SECRETKEY, Constant.SALT);
-	        // Kiểm tra mật khẩu
-	        if (password.equals(storedPassword) || password.equals(passwordDecryption)) {
+	        
+	        // So sánh mật khẩu nhập vào với mật khẩu đã hash
+	        if (encoder.matches(password, storedPassword)) {
+	            // Mật khẩu hợp lệ, trả về tài khoản
 	            return user;
 	        }
 	    }
+	    // Mật khẩu không hợp lệ hoặc tài khoản không tồn tại, trả về null
 	    return null;
 	}
 
+	
 
 	@Override
 	public boolean checkExistUsername(String username) {
