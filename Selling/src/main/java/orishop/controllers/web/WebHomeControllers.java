@@ -3,7 +3,6 @@ package orishop.controllers.web;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.Cookie;
@@ -17,6 +16,7 @@ import orishop.models.AccountModels;
 import orishop.services.AccountServiceImpl;
 import orishop.services.IAccountService;
 import orishop.util.Constant;
+import orishop.util.CookieUtils;
 import orishop.util.Email;
 
 @WebServlet(urlPatterns = { "/web/login", "/web/register", "/web/forgotpass", "/web/waiting", "/web/VerifyCode",
@@ -28,37 +28,21 @@ public class WebHomeControllers extends HttpServlet {
 
 	IAccountService accountService = new AccountServiceImpl();
 
-//	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-//
-//		String url = req.getRequestURI().toString();
-//
-//		if (url.contains("web/register")) {
-//			req.getRequestDispatcher("/views/web/register.jsp").forward(req, resp);
-//		} else if (url.contains("web/VerifyCode")) {
-//			req.getRequestDispatcher("/views/web/verify.jsp").forward(req, resp);
-//		} else if (url.contains("web/login")) {
-//			getLogin(req, resp);
-//		} else if (url.contains("web/forgotpass")) {
-//			req.getRequestDispatcher("/views/web/forgotpassword.jsp").forward(req, resp);
-//		} else if (url.contains("web/waiting")) {
-//			getWaiting(req, resp);
-//		} else if (url.contains("web/logout")) {
-//			getLogout(req, resp);
-//		}
-//
-//	}
-	
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
 		String url = req.getRequestURI().toString();
+
 		if (url.contains("web/register")) {
 			String csrfToken = CsrfTokenManager.generateCsrfToken();
 			CsrfTokenManager.saveCsrfTokenForSession(req.getSession().getId(), csrfToken);
 			req.setAttribute(CSRF_TOKEN_ATTR, csrfToken);
+
 			req.getRequestDispatcher("/views/web/register.jsp").forward(req, resp);
 		} else if (url.contains("web/VerifyCode")) {
 			String csrfToken = CsrfTokenManager.generateCsrfToken();
 			CsrfTokenManager.saveCsrfTokenForSession(req.getSession().getId(), csrfToken);
 			req.setAttribute(CSRF_TOKEN_ATTR, csrfToken);
+
 			req.getRequestDispatcher("/views/web/verify.jsp").forward(req, resp);
 		} else if (url.contains("web/login")) {
 			getLogin(req, resp);
@@ -69,39 +53,52 @@ public class WebHomeControllers extends HttpServlet {
 		} else if (url.contains("web/logout")) {
 			getLogout(req, resp);
 		}
-	}
 
+	}
 
 	private void getLogout(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		HttpSession session = req.getSession();
-		session.removeAttribute("account");
+	    HttpSession session = req.getSession();
+	    session.removeAttribute("account");
 
-		Cookie[] cookies = req.getCookies();
+	    Cookie[] cookies = req.getCookies();
 
-		if (cookies != null) {
-			for (Cookie cookie : cookies) {
-				if (Constant.COOKIE_REMEBER.equals(cookie.getName())) {
-					cookie.setMaxAge(0);
-					resp.addCookie(cookie);
-				}
-			}
-		}
+	    if (cookies != null) {
+	        for (Cookie cookie : cookies) {
+	            if (Constant.COOKIE_REMEBER.equals(cookie.getName())) {
+	                // Xóa giá trị của cookie thay vì đặt thời gian sống của nó về 0
+	                cookie.setValue("");
+	                cookie.setPath("/"); // Đảm bảo cùng một đường dẫn với cookie gốc
+	                cookie.setMaxAge(0);
+	                resp.addCookie(cookie);
+	            }
+	        }
+	    }
 
-		resp.sendRedirect(req.getContextPath() + "/user/home");
+	    resp.sendRedirect(req.getContextPath() + "/user/home");
 	}
+
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String url = req.getRequestURI().toString();
-		if (url.contains("web/register")) {
-			postRegister(req, resp);
-		} else if (url.contains("web/login")) {
-			postLogin(req, resp);
-		} else if (url.contains("web/forgotpass")) {
-			postForgotPassword(req, resp);
-		} else if (url.contains("web/VerifyCode")) {
-			postVerifyCode(req, resp);
-		}
+		String csrfTokenFromForm = req.getParameter("csrfToken");
+		String sessionId = req.getSession().getId();
+		String csrfTokenFromSession = CsrfTokenManager.getCsrfTokenForSession(sessionId);
+
+		if (csrfTokenFromSession != null && csrfTokenFromSession.equals(csrfTokenFromForm)) {
+            if (url.contains("web/register")) {
+                postRegister(req, resp);
+            } else if (url.contains("web/login")) {
+                postLogin(req, resp);
+            } else if (url.contains("web/forgotpass")) {
+                postForgotPassword(req, resp);
+            } else if (url.contains("web/VerifyCode")) {
+                postVerifyCode(req, resp);
+            }
+        } else {
+            // Token CSRF không hợp lệ, từ chối yêu cầu
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid CSRF token");
+        }
 	}
 
 	private void postVerifyCode(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -130,9 +127,15 @@ public class WebHomeControllers extends HttpServlet {
 	}
 
 	private void saveRememberMe(HttpServletResponse resp, String username) {
-		Cookie cookie = new Cookie(Constant.COOKIE_REMEBER, username);
-		cookie.setMaxAge(30 * 60);
-		resp.addCookie(cookie);
+		String cookieValue = username;
+	    String cookieName = Constant.COOKIE_REMEBER;
+	    int maxAge = 30 * 60;
+
+	    // Xây dựng chuỗi tiêu đề Set-Cookie với SameSite=Lax
+	    String setCookieHeader = String.format("%s=%s; Max-Age=%d; Path=/; Secure; HttpOnly; SameSite=Lax", cookieName, cookieValue, maxAge);
+
+	    // Thiết lập tiêu đề Set-Cookie cho response
+	    resp.setHeader("Set-Cookie", setCookieHeader);
 	}
 
 	private void postForgotPassword(HttpServletRequest req, HttpServletResponse resp)
@@ -168,29 +171,6 @@ public class WebHomeControllers extends HttpServlet {
 		}
 	}
 
-//	private void getLogin(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-//		// check session
-//		HttpSession session = req.getSession(false);
-//		if (session != null && session.getAttribute("account") != null) {
-//			resp.sendRedirect(req.getContextPath() + "/web/waiting");
-//			return;
-//		}
-//		// check cookie
-//		Cookie[] cookies = req.getCookies();
-//		if (cookies != null) {
-//			for (Cookie cookie : cookies) {
-//				if (cookie.getName().equals("username")) {
-//					session = req.getSession(true);
-//					session.setAttribute("username", cookie.getValue());
-//					resp.sendRedirect(req.getContextPath() + "/waiting");
-//					return;
-//				}
-//			}
-//		}
-//
-//		req.getRequestDispatcher("/views/web/login.jsp").forward(req, resp);
-//	}
-	
 	private void getLogin(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 	    // check session
 	    String csrfToken = CsrfTokenManager.generateCsrfToken();
@@ -208,19 +188,17 @@ public class WebHomeControllers extends HttpServlet {
 	            if (cookie.getName().equals("username")) {
 	            	session = req.getSession(true);
 	                session.setAttribute("username", cookie.getValue());
-	               
-	                // Thiết lập SameSite cho cookie
-	                String cookieValue = cookie.getValue();
-	                String cookieName = cookie.getName();
-	                int maxAge = cookie.getMaxAge();
-	                String setCookieHeader = String.format("%s=%s; Max-Age=%d; Path=/; Secure; HttpOnly; SameSite=Lax", cookieName, cookieValue, maxAge);
-	                resp.setHeader("Set-Cookie", setCookieHeader);
-	               
+	                String csrfTokenFromForm = req.getParameter("csrfToken");
+	                
+	    	        String setCsrfCookieHeader = CookieUtils.createSameSiteCookie("csrfToken", csrfTokenFromForm, "/", -1, true, "Lax");
+	                resp.setHeader("Set-Cookie", setCsrfCookieHeader);
+	                
 	                resp.sendRedirect(req.getContextPath() + "/waiting");
 	                return;
 	            }
 	        }
 	    }
+
 	    req.getRequestDispatcher("/views/web/login.jsp").forward(req, resp);
 	}
 
@@ -272,7 +250,6 @@ public class WebHomeControllers extends HttpServlet {
 
 		}
 	}
-
 
 	private void getWaiting(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
