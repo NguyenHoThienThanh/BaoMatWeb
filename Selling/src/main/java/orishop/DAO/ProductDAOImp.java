@@ -88,9 +88,10 @@ public class ProductDAOImp implements IProductDAO {
 
 		try {
 
-			String query = "select * from PRODUCT where ProductName like N'%" + productName + "%'";
+			String query = "SELECT * FROM PRODUCT WHERE ProductName LIKE N'%' + ? + N'%'";
 			conn = DBConnectionSQLServer.getConnectionW();
 			ps = conn.prepareStatement(query);
+			ps.setString(1, productName);
 			rs = ps.executeQuery();
 
 			while (rs.next()) {
