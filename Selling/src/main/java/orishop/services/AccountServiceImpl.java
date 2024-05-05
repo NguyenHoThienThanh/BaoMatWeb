@@ -94,7 +94,7 @@ public class AccountServiceImpl implements IAccountService{
 	public AccountModels login(String username, String password) {
 		AccountModels user = this.findOne(username);
 		String passwordDecryption = PasswordEncryption.decrypt(user.getPassword(), Constant.SECRETKEY, Constant.SALT);
-		if (user!=null && password.equals(user.getPassword())) {
+		if (user!=null && user.getPassword().equals(password)){
 			return user;
 		} else if (user!=null && (passwordDecryption.equals(password))) {
 			return user;
